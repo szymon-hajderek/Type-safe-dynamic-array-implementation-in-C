@@ -49,7 +49,6 @@
       T* d:
         Abbreviation for "data". Array with vector's entries.
 */
-#define val(T, ...) &((const T) { __VA_ARGS__ })
 #define pod_deepcopy_fun_factory(T) T pod_copy_##T(const T* val) { return *val; }
 #define pod_deepfree_fun_factory(T) void pod_free_##T(T* val) { (void) val; }
 #define pod_nullify_fun_factory(T) void pod_nullify_##T(T* val) { (void) val; }

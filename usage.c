@@ -1,12 +1,21 @@
 #include "vector.h"
 
+// declares type `vint`
+// pb_vint takes argument of type int by value
+v_pod(int)
+
 typedef struct range {
   int64_t start, end;
 } range;
 
-v_pod(int) // pb_vint takes argument of type int by value
-v_pod_large(range) // pb_vrange takes argument of type range by pointer
+// declares type `vrange`
+// pb_vrange takes argument of type range by pointer
+v_pod_large(range)
+
+// declares type `vvrange`
 v(vrange)
+
+// declares type `vvvrange`
 v(vvrange)
 
 int main() {
@@ -30,7 +39,7 @@ int main() {
   // resize without initializing elements
   resize_vrange(&range_vec_3D.d[2].d[10], 10);
 
-  // alternatives
+  // alternative ways of appending to the vector
   {
     range rng = {
       .start = 1000000 * (int64_t) 1000000,
@@ -39,11 +48,11 @@ int main() {
     pb_vrange(
       &range_vec_3D.d[4].d[17], &rng
     );
+    pb_vrange(
+      &range_vec_3D.d[4].d[17],
+      &(range) { 94283, 32470234 }
+    );
   }
-  pb_vrange(
-    &range_vec_3D.d[4].d[17],
-    &(range) { 94283, 32470234 }
-  );
 
   vvvrange copied_vector = deepcopy_vvvrange(&range_vec_3D); // deep copying
   deepfree_vvvrange(&copied_vector); // but we don't really need the copy (;
