@@ -57,17 +57,31 @@ int main() {
     pb_vrange(&vec, &(range){ i, i + 5 }); // no reallocation in this loop
   }
 
-  // WARNING! As stated in the header, init function takes ownership over non-POD typed val.
-  // This means that val passed that way should not be used in any way by the user afterwards.
+  // pb vs pb_move
   {
+    vvrange vec_2D = make_vvrange();
+    // vec_2D now contains a three deep copies of vec
+    for(int i = 0; i < 3; i++) {
+      pb_vvrange(&vec_2D, &vec);
+    }
+    // vec_2D now also contains a shallow copy of vec
+    pb_move_vvrange(&vec_2D, &vec);
+    // now, (vec == make_vvrange()), as it's been nullified.
+    // it can be used safely, but its content has been consumed.
+  }
+
+  {
+    // WARNING! This is convienience function used for chaining. Unlike pb_move, init does not nullify argument, since it's passed by value to enable chaining.
+    // Thus, for non-POD types, this function should only be called with val being a temporary variable which is in no way used after this function call or a constant, since val is shallow copied into the structure.
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange owner_of_my_vec = init_vvvrange(10, my_vec);
 
     // frees owner_of_my_vec, including my_vec
     deepfree_vvvrange(&owner_of_my_vec);
+    // deepfree_vvrange(&my_vec) <-> this would result in double-free error!
   }
 
-  // in order to enable future use of my_vec, one should do it as follows:
+  // To use another vector as init template, deep copy it
   {
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange not_owner_of_my_vec = init_vvvrange(10, deepcopy_vvrange(&my_vec));
@@ -75,6 +89,9 @@ int main() {
     // ...
     // frees not_owner_of_my_vec, but does not free my_vec
     deepfree_vvvrange(&not_owner_of_my_vec);
+
+    // my_vec needs to be fred separately
+    deepfree_vvvrange(&my_vec);
   }
 
 }
