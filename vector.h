@@ -9,9 +9,9 @@
 /*
   Documentation:
   v_pod(T):
-    Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro should be used for declaring vectors of POD types smaller than 8 bytes. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function). With this macro, PB_ARG_TYPE = (const T). That means pb_v##T takes val by value.
+    Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function). With this macro, PB_ARG_TYPE = (const T). That means pb_v##T takes val by value.
   v_pod_large(T):
-    Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro should be used for declaring vectors of POD types bigger than 8 bytes. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function).  With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large POD type.
+    Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function).  With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large POD type.
   v(T):
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro is intended to be used with non-POD types. It requires that deepcopy_##T and deepfree_##T functions are implemented. With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large non-POD type.
     
@@ -33,22 +33,7 @@
       void deepfree_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
         Performs a deep freeing of the vector's memory. It also zeros all members.
       VEC_TYPE_NAME init_##VEC_TYPE_NAME(size_t n, INIT_ARG_TYPE val):
-        Returns a vector, whose first element is a shallow copy of val and other elements are deep copies of val. That means ownership over non-POD val is transferred when calling this function. For a non-POD type, If n == 0, val is freed. This allows convienient chaining without any unnecessary deep copying:
-
-        v_pod(int)
-        v(vint)
-
-        If you don't mind passing ownership over my_template, you should use it as follows:
-        vint my_template = init_vint(10, 4);
-        vvint vec_2D = init_vvint(20, my_template);
-
-        or simply:
-        vvint vec_2D = init_vvint(20, init_vint(10, 4));
-
-        If you don't want to transfer ownership over my_template, you should use it as follows:
-        vint my_template = init_vint(10, 4);
-        vvint vec_2D = init_vvint(20, deep_copy_vint(&my_template));
-
+        Returns a vector, whose first element is a shallow copy of val and other elements are deep copies of val. That means ownership over non-POD val is transferred when calling this function. For a non-POD type, If n == 0, val is freed. This allows convienient init function chaining without any unnecessary deep copying.
 
     members:
       size_t capacity:

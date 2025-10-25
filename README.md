@@ -1,3 +1,29 @@
+# Type-safe multidimensional dynamic array in C
+
+This header-only library provides macros for automated definition of typed dynamic arrays (vectors) in C.
+
+The library is focused on providing the friendliest usage possible, while maintaining near native-array efficiency in all operations.
+
+# Features
+
+The vector implements:
+
+- automatic `deep copy` functionality (to make copying vectors trivial)
+- automatic `deep free` functionality (to avoid memory leaks)
+- specialized implementation of vector for small POD types, large POD types and non-POD types.
+- chained initialization of multidimensional vectors (just like `std::vector`'s constructor)
+
+# Usage
+
+`v_pod(T)` - Creates a vector type `vT` of copied by value POD typed elements.
+`v_pod_large(T)` - Creates a vector type `vT` of POD typed elements, which should be passed by pointer due to their large size.
+`v(T)` - Creates a vector type `vT` of complex, non-POD typed elements. Assumes existance of `deep_copy_T` and `deep_free_T`.
+
+Each macro defines functions `deep_copy_vT` and `deep_free_vT`.
+
+File `usage.c`:
+
+```cc
 #include "vector.h"
 
 typedef struct range {
@@ -78,3 +104,4 @@ int main() {
   }
 
 }
+```
