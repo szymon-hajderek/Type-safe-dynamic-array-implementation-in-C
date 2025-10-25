@@ -11,15 +11,21 @@ The vector implements:
 - automatic `deep copy` functionality (to make copying vectors trivial)
 - automatic `deep free` functionality (to avoid memory leaks)
 - specialized implementation of vector for small POD types, large POD types and non-POD types.
-- chained initialization of multidimensional vectors (just like `std::vector`'s constructor)
+- chained initialization of multidimensional vectors (similar to `std::vector`'s constructor)
+
+More techincal documentation is contained in within the header.
 
 # Usage
 
 `v_pod(T)` - Creates a vector type `vT` of copied by value POD typed elements.
 `v_pod_large(T)` - Creates a vector type `vT` of POD typed elements, which should be passed by pointer due to their large size.
-`v(T)` - Creates a vector type `vT` of complex, non-POD typed elements. Assumes existance of `deep_copy_T` and `deep_free_T`.
+`v(T)` - Creates a vector type `vT` of complex, non-POD typed elements. Assumes existance of `deep_copy_T`, `deep_free_T` and `nullify_T`.
 
-Each macro defines functions `deep_copy_vT` and `deep_free_vT`.
+`deepcopy_T(T* val)` - this is self-explanatory.
+`deepfree_T(T* val)` - shoulud free all memory owned by `val`.
+`nullify_T(T* val)` - shoulud set `val` to state, where it is safe to call `deepfree_vT(&val)` more than once. It should also bring `val` back to `T`'s default state.
+
+Each macro automatically implements functions `deepcopy_vT`, `deepfree_vT` and `nullify_vT`.
 
 File `usage.c`:
 
@@ -83,17 +89,31 @@ int main() {
     pb_vrange(&vec, &(range){ i, i + 5 }); // no reallocation in this loop
   }
 
-  // WARNING! As stated in the header, init function takes ownership over non-POD typed val.
-  // This means that val passed that way should not be used in any way by the user afterwards.
+  // pb vs pb_move
   {
+    vvrange vec_2D = make_vvrange();
+    // vec_2D now contains a three deep copies of vec
+    for(int i = 0; i < 3; i++) {
+      pb_vvrange(&vec_2D, &vec);
+    }
+    // vec_2D now also contains a shallow copy of vec
+    pb_move_vvrange(&vec_2D, &vec);
+    // now, (vec == make_vvrange()), as it's been nullified.
+    // it can be used safely, but its content has been consumed.
+  }
+
+  {
+    // WARNING: This is a convenience function that can be used in chained expressions.
+    // For non-POD types, make sure that `val` is either a temporary variable not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure.
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange owner_of_my_vec = init_vvvrange(10, my_vec);
 
     // frees owner_of_my_vec, including my_vec
     deepfree_vvvrange(&owner_of_my_vec);
+    // deepfree_vvrange(&my_vec) <-> this would result in double-free error!
   }
 
-  // in order to enable future use of my_vec, one should do it as follows:
+  // If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
   {
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange not_owner_of_my_vec = init_vvvrange(10, deepcopy_vvrange(&my_vec));
@@ -101,6 +121,9 @@ int main() {
     // ...
     // frees not_owner_of_my_vec, but does not free my_vec
     deepfree_vvvrange(&not_owner_of_my_vec);
+
+    // my_vec needs to be fred separately
+    deepfree_vvvrange(&my_vec);
   }
 
 }

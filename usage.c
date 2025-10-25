@@ -71,8 +71,8 @@ int main() {
   }
 
   {
-    // WARNING! This is convienience function used for chaining. Unlike pb_move, init does not nullify argument, since it's passed by value to enable chaining.
-    // Thus, for non-POD types, this function should only be called with val being a temporary variable which is in no way used after this function call or a constant, since val is shallow copied into the structure.
+    // WARNING: This is a convenience function that can be used in chained expressions.
+    // For non-POD types, make sure that `val` is either a temporary variable not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure.
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange owner_of_my_vec = init_vvvrange(10, my_vec);
 
@@ -81,7 +81,7 @@ int main() {
     // deepfree_vvrange(&my_vec) <-> this would result in double-free error!
   }
 
-  // To use another vector as init template, deep copy it
+  // If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
   {
     vvrange my_vec = init_vvrange(20, make_vrange());
     vvvrange not_owner_of_my_vec = init_vvvrange(10, deepcopy_vvrange(&my_vec));

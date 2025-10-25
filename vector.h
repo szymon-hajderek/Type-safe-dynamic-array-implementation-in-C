@@ -14,6 +14,10 @@
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function).  With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large POD type.
   v(T):
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro is intended to be used with non-POD types. It requires that deepcopy_##T, deepfree_##T and nullify_##T functions are implemented. With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large non-POD type.
+
+    deepcopy_T(T* val) - this is self-explanatory.
+    nullify_T(T* val) - shoulud set `val` to state, where it is safe to call `deepfree_vT(&val)` more than once. It should also bring `val` back to `T`'s default state.
+    deepfree_T(T* val) - shoulud free all memory owned by `val` and call nullify_T(val).
     
   Vector's features:
       void pb_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T_ARG_TYPE val):
@@ -35,7 +39,7 @@
       void deepfree_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
         Performs a deep freeing of the vector's memory. It also zeros all members.
       VEC_TYPE_NAME init_##VEC_TYPE_NAME(size_t n, T val):
-        WARNING! This is convienience function used for chaining. For non-POD types, this function should only be called with val being a temporary variable which is in no way used after this function call or a constant, since val is shallow copied into the structure. To use another vector as a template, deep copy it.
+        WARNING: This is a convenience function allowing use in chained form. For non-POD types, ensure that `val` is either a temporary variable (for example a call to T's constructor) not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure. If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
 
     members:
       size_t capacity:
