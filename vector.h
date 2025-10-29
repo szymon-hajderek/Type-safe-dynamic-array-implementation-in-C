@@ -1,57 +1,63 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 /*
-  Documentation:
+Author: Szymon Hajderek
+Github: https://github.com/szymon-hajderek/Type-safe-dynamic-array-implementation-in-C
+
+Documentation:
   v_pod(T):
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function). With this macro, PB_ARG_TYPE = (const T). That means pb_v##T takes val by value.
   v_pod_large(T):
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro also declares simple automatic copy and free functions called pod_copy_##T and pod_free_##T (which is a no-op function).  With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large POD type.
   v(T):
     Declares type _v##T typedeffed with VEC_TYPE_NAME = v##T. This macro is intended to be used with non-POD types. It requires that deepcopy_##T, deepfree_##T and nullify_##T functions are implemented. With this macro, PB_ARG_TYPE = (const T*). That means pb_v##T takes val through a pointer. This is to ensure no overhead related to the need of copying large non-POD type.
-
-    deepcopy_T(T* val) - this is self-explanatory.
-    nullify_T(T* val) - shoulud set `val` to state, where it is safe to call `deepfree_vT(&val)` more than once. It should also bring `val` back to `T`'s default state.
-    deepfree_T(T* val) - shoulud free all memory owned by `val` and call nullify_T(val).
     
+    deepcopy_T(T* val) - this is self-explanatory When using v_pod or v_pod_large this function is a simple byte to byte copy.
+    nullify_T(T* val) - shoulud set `val` to state, where it is safe to call `deepfree_vT(&val)` more than once. It should also bring `val` back to `T`'s default state. When using v_pod or v_pod_large this function is a no-op.
+    deepfree_T(T* val) - shoulud free all memory owned by `val` and call nullify_T(val). When using v_pod or v_pod_large this function is a no-op.
+  
+  // WARNING: Read init_v##T documentation below. Using it without understanding how it works poses a serious safety risk.
+  
   Vector's features:
-      void pb_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T_ARG_TYPE val):
-        pb is an abbreviation for push back. Appends val to the  end of vec. The operation performs in amortized constant time.
-      void pb_move_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T* val):
-        pb is an abbreviation for push back. Appends val to the end of vec and nullifies val. The operation performs in amortized constant time.
-      void alloc_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n):
-        Allocates / reallocates vec->d to at least n * sizeof(T) bytes. vec's content is copied to the new location. If n is less than current vec->size, vec->size is set to n and remainging elements are discarded.
-      void resize_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n):
-        Equivalent to calling alloc_##VEC_TYPE_NAME(vec, n) and setting vec->size to n.
-      T* ref_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t ind):
-        Returns pointer to vec.d[ind]
-      T get_##VEC_TYPE_NAME(const VEC_TYPE_NAME* vec, size_t ind):
-        Returns vec.d[ind]
-      VEC_TYPE_NAME make_##VEC_TYPE_NAME():
-        Returns a clean, initialized vector
-      VEC_TYPE_NAME deepcopy_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
-        Performs a deep copy of vector vec.
-      void deepfree_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
-        Performs a deep freeing of the vector's memory. It also zeros all members.
-      VEC_TYPE_NAME init_##VEC_TYPE_NAME(size_t n, T val):
-        WARNING: This is a convenience function allowing use in chained form. For non-POD types, ensure that `val` is either a temporary variable (for example a call to T's constructor) not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure. If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
+    void pb_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T_ARG_TYPE val):
+      pb is an abbreviation for push back. Appends val to the  end of vec. The operation performs in amortized constant time.
+    void pb_move_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T* val):
+      pb is an abbreviation for push back. Appends val to the end of vec and nullifies val. The operation performs in amortized constant time.
+    void alloc_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n):
+      Allocates / reallocates vec->d to at least n * sizeof(T) bytes. vec's content is copied to the new location. If n is less than current vec->size, vec->size is set to n and remainging elements are discarded.
+    void resize_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n):
+      Equivalent to calling alloc_##VEC_TYPE_NAME(vec, n) and setting vec->size to n.
+    T* ref_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t ind):
+      Returns pointer to vec.d[ind]
+    T get_##VEC_TYPE_NAME(const VEC_TYPE_NAME* vec, size_t ind):
+      Returns vec.d[ind]
+    VEC_TYPE_NAME make_##VEC_TYPE_NAME():
+      Returns a clean, initialized vector
+    VEC_TYPE_NAME deepcopy_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
+      Performs a deep copy of vector vec.
+    void deepfree_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
+      Performs a deep freeing of the vector's memory. It also zeros all members.
+    VEC_TYPE_NAME init_##VEC_TYPE_NAME(size_t n, T val):
+      WARNING: This is a convenience function allowing use in chained form. For non-POD types, ensure that `val` is either a temporary variable (for example a call to T's constructor) not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure. If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
 
-    members:
-      size_t capacity:
-        number of maximum entries this vector can contain before a need to reallocate memory.
-      size_t size:
-        number of entries the vector contains.
-      T* d:
-        Abbreviation for "data". Array with vector's entries.
+  members:
+    size_t capacity:
+      number of maximum entries this vector can contain before a need to reallocate memory.
+    size_t size:
+      number of entries the vector contains.
+    T* d:
+      Abbreviation for "data". Array with vector's entries.
 */
-#define pod_deepcopy_fun_factory(T) T pod_copy_##T(const T* val) { return *val; }
-#define pod_deepfree_fun_factory(T) void pod_free_##T(T* val) { (void) val; }
-#define pod_nullify_fun_factory(T) void pod_nullify_##T(T* val) { (void) val; }
+#define pod_deepcopy_fun_factory(T) static inline T pod_copy_##T(const T* val) { return *val; }
+#define pod_deepfree_fun_factory(T) static inline void pod_free_##T(T* val) { (void) val; }
+#define pod_nullify_fun_factory(T) static inline void pod_nullify_##T(T* val) { (void) val; }
 #define v_pod(T) \
   pod_deepcopy_fun_factory(T) \
   pod_deepfree_fun_factory(T) \
@@ -68,11 +74,20 @@
     size_t size, capacity; \
     T* d; \
   } VEC_TYPE_NAME; \
+  static inline void nullify_v##T(VEC_TYPE_NAME* vec) { \
+    vec->size = vec->capacity = 0; \
+    vec->d = NULL; \
+  } \
   static inline void alloc_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n) { \
+    if(n == 0) { \
+      free(vec->d); \
+      nullify_v##T(vec); \
+      return; \
+    } \
     T* ptr = (T*) realloc(vec->d, sizeof(T) * (size_t) n); \
     if(ptr == NULL) { \
-        fprintf(stderr, "Allocation failed in alloc_v"#T "\n"); \
-        exit(EXIT_FAILURE); \
+      fprintf(stderr, "Allocation failed in alloc_v"#T "\n"); \
+      exit(EXIT_FAILURE); \
     } \
     vec->d = ptr; \
     vec->capacity = n; \
@@ -105,13 +120,8 @@
   } \
   static inline VEC_TYPE_NAME make_##VEC_TYPE_NAME() { \
     VEC_TYPE_NAME vec; \
-    vec.size = vec.capacity = 0; \
-    vec.d = NULL; \
+    nullify_v##T(&vec); \
     return vec;  \
-  } \
-  static inline void nullify_v##T(VEC_TYPE_NAME* vec) { \
-    vec->size = vec->capacity = 0; \
-    vec->d = NULL; \
   } \
   static inline VEC_TYPE_NAME deepcopy_##VEC_TYPE_NAME(const VEC_TYPE_NAME* vec) { \
     VEC_TYPE_NAME res = make_##VEC_TYPE_NAME(); \
