@@ -45,7 +45,7 @@ Documentation:
     void deepfree_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec):
       Performs a deep freeing of the vector's memory. It also zeros all members.
     VEC_TYPE_NAME init_##VEC_TYPE_NAME(size_t n, T val):
-      WARNING: This is a convenience function allowing use in chained form. For non-POD types, ensure that `val` is either a temporary variable (for example a call to T's constructor) not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure. If you intend to use `val` only as a template, consider passing deepcopy_T(&val) instead of val. 
+      WARNING: This is a convenience function allowing use in chained form. For non-POD types, ensure that `val` is either a temporary variable (for example a call to T's constructor) not used after this function call, or a constant expression. This is because `val` is shallow-copied into the structure. If you intend to use a non-temporary `val` only as a template, rather than losing ownership over it, consider passing deepcopy_T(&val) instead of val. 
 
   members:
     size_t capacity:
