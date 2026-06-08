@@ -1,7 +1,6 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -27,7 +26,7 @@ Documentation:
   
   Vector's features:
     void pb_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T_ARG_TYPE val):
-      pb is an abbreviation for push back. Appends val to the  end of vec. The operation performs in amortized constant time.
+      pb is an abbreviation for push back. Appends val to the  end of vec. The operation performs in amortized constant time. T_ARG_TYPE is T const for v_pod and T* for any other macro.
     void pb_move_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T* val):
       pb is an abbreviation for push back. Appends val to the end of vec and nullifies val. The operation performs in amortized constant time.
     void alloc_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n):
@@ -79,6 +78,12 @@ Documentation:
     vec->d = NULL; \
   } \
   static inline void alloc_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n) { \
+    if(vec->size > n) { \
+      for(size_t i = n; i < vec->size; i++) { \
+        DEEPFREE_FUN(vec->d + i); \
+      } \
+      vec->size = n; \
+    } \
     if(n == 0) { \
       free(vec->d); \
       nullify_v##T(vec); \
@@ -91,9 +96,6 @@ Documentation:
     } \
     vec->d = ptr; \
     vec->capacity = n; \
-    if(vec->size > n) { \
-      vec->size = n; \
-    } \
   } \
   static inline void pb_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, T_ARG_TYPE val) { \
     if(vec->size >= vec->capacity) { \
@@ -109,10 +111,10 @@ Documentation:
     NULLIFY_FUN(val); \
   } \
   static inline void resize_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n) { \
-    for (size_t i = n; i < vec->size; i++) { \
-      DEEPFREE_FUN(vec->d + i); \
-    } \
     alloc_##VEC_TYPE_NAME(vec, n); \
+    for (size_t i = vec->size; i < n; i++) { \
+      NULLIFY_FUN(vec->d + i); \
+    } \
     vec->size = n; \
   } \
   static inline T* ref_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t ind) { \

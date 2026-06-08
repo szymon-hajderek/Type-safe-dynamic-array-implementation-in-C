@@ -1,0 +1,4 @@
+.vscode
+test
+test-asan
+vgcore.*
