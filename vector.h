@@ -109,6 +109,9 @@ Documentation:
     NULLIFY_FUN(val); \
   } \
   static inline void resize_##VEC_TYPE_NAME(VEC_TYPE_NAME* vec, size_t n) { \
+    for (size_t i = n; i < vec->size; i++) { \
+      DEEPFREE_FUN(vec->d + i); \
+    } \
     alloc_##VEC_TYPE_NAME(vec, n); \
     vec->size = n; \
   } \
