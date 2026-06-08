@@ -36,7 +36,6 @@ echo -e "${GREEN}✅ Valgrind check passed flawlessly!${NC}"
 # --- Step 2: Address Sanitizer Check ---
 echo -e "\n${GREEN}[2/2] Building ASan target...${NC}"
 # Clean the previous build just to be absolutely sure we recompile with ASan flags
-rm -f test 
 make test-asan
 
 if [ $? -ne 0 ]; then
@@ -46,7 +45,7 @@ fi
 
 echo -e "${GREEN}>>> Running ASan binary...${NC}"
 # ASan will automatically crash the program and return a non-zero exit code on failure
-./test
+./test-asan
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Address Sanitizer detected undefined behavior or memory errors! Stop.${NC}"
